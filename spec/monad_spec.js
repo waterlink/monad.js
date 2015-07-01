@@ -1,5 +1,6 @@
 var curry = require("../src/monad").curry
 var functor = require("../src/monad").functor
+var Maybe = require("../src/monad").Maybe
 
 context = describe
 
@@ -59,12 +60,27 @@ describe("currying", function() {
 })
 
 describe("functors", function() {
+  var mult = curry(function(a, b) { return a * b })
+
   describe("array functor example", function() {
     functor(Array, { fmap: Array.prototype.map })
 
     it("works as expected", function() {
-      var mult = curry(function(a, b) { return a * b })
       expect([1, 2, 3, 5].fmap()()()()(mult(2))).toEqual([2, 4, 6, 10])
+    })
+  })
+
+  describe("maybe functor example", function() {
+    functor(Maybe, {
+      fmap: function(fn) {
+        if (this.isJust()) { return new Maybe.Just(fn(this.value)) }
+        if (this.isNothing()) { return new Maybe.Nothing }
+      }
+    })
+
+    it("works as expected", function() {
+      expect(new Maybe.Just(71).fmap(mult(3))).toEqual(new Maybe.Just(213))
+      expect(new Maybe.Nothing().fmap(mult(3))).toEqual(new Maybe.Nothing)
     })
   })
 })

@@ -39,3 +39,16 @@ M.functor = function(type, opts) {
   type.prototype.fmap = M.curry(opts.fmap)
   return type
 }
+
+// Types
+M.Maybe = function() {}
+
+M.Maybe.Just = function(value) { this.value = value }
+M.Maybe.Just.prototype = new M.Maybe
+M.Maybe.Just.prototype.isJust = function() { return true }
+M.Maybe.Just.prototype.isNothing = function() { return false }
+
+M.Maybe.Nothing = function() {}
+M.Maybe.Nothing.prototype = new M.Maybe
+M.Maybe.Nothing.prototype.isJust = function() { return false }
+M.Maybe.Nothing.prototype.isNothing = function() { return true }
