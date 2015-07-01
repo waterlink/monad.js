@@ -2,6 +2,7 @@ exports = exports || {}
 
 M = exports
 
+// Currying
 M.curry = function(fn) {
   return M.enableCurriedFunction(fn)
 }
@@ -31,4 +32,10 @@ M.CurriedFunction.prototype.apply = function(target, args) {
   return M.enableCurriedFunction(function() {
     return that.apply(target, args.concat([].slice.call(arguments)))
   }, this.length - args.length)
+}
+
+// Functors
+M.functor = function(type, opts) {
+  type.prototype.fmap = M.curry(opts.fmap)
+  return type
 }

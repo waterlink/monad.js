@@ -1,4 +1,5 @@
 var curry = require("../src/monad").curry
+var functor = require("../src/monad").functor
 
 context = describe
 
@@ -53,6 +54,17 @@ describe("currying", function() {
 
         expect(obj.fn()()()()(1)()()()()()()()(2, 3)).toEqual("me+value: 79123")
       })
+    })
+  })
+})
+
+describe("functors", function() {
+  describe("array functor example", function() {
+    functor(Array, { fmap: Array.prototype.map })
+
+    it("works as expected", function() {
+      var mult = curry(function(a, b) { return a * b })
+      expect([1, 2, 3, 5].fmap()()()()(mult(2))).toEqual([2, 4, 6, 10])
     })
   })
 })
