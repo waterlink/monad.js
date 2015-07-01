@@ -76,10 +76,13 @@ describe("functors", function() {
 
   describe("maybe functor example", function() {
     functor(Maybe, {
-      fmap: function(fn) {
-        if (this.isJust()) { return new Maybe.Just(fn(this.value)) }
-        if (this.isNothing()) { return new Maybe.Nothing }
-      }
+      fmap: match.withReceiver(
+        pattern(Maybe.Just, Function,
+          function(fn) { return new Maybe.Just(fn(this.value)) }),
+
+        pattern(Maybe.Nothing, Function,
+          function(_) { return new Maybe.Nothing })
+      )
     })
 
     it("works as expected", function() {

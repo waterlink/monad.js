@@ -42,6 +42,11 @@ M.match = function() {
   return M.enableMatch(patterns)
 }
 
+M.match.withReceiver = function() {
+  var patterns = [].slice.call(arguments)
+  return M.enableMatch(patterns, true)
+}
+
 M.pattern = function() {
   var args = [].slice.call(arguments),
       fn = args.pop()
@@ -72,13 +77,18 @@ M.ofType = function(type, value) {
   return value === type
 }
 
-M.enableMatch = function(patterns) {
+M.enableMatch = function(patterns, withReceiver) {
   var fn = function() {
     var args = [].slice.call(arguments),
+        argsToCheck = args,
         foundPattern = undefined
 
+    if (withReceiver) {
+      argsToCheck = [this].concat(args)
+    }
+
     patterns.map(function(pattern) {
-      if (pattern.matches(args)) {
+      if (pattern.matches(argsToCheck)) {
         foundPattern = foundPattern || pattern
       }
     })
@@ -90,7 +100,13 @@ M.enableMatch = function(patterns) {
     return foundPattern.apply(this, args)
   }
 
-  return M.enableCurriedFunction(fn, patterns[0].length)
+  var length = patterns[0].length
+
+  if (withReceiver) {
+    length = length - 1
+  }
+
+  return M.enableCurriedFunction(fn, length)
 }
 
 M.Pattern = function(args, fn) {
@@ -127,10 +143,6 @@ M.Maybe = function() {}
 
 M.Maybe.Just = function(value) { this.value = value }
 M.Maybe.Just.prototype = new M.Maybe
-M.Maybe.Just.prototype.isJust = function() { return true }
-M.Maybe.Just.prototype.isNothing = function() { return false }
 
 M.Maybe.Nothing = function() {}
 M.Maybe.Nothing.prototype = new M.Maybe
-M.Maybe.Nothing.prototype.isJust = function() { return false }
-M.Maybe.Nothing.prototype.isNothing = function() { return true }
