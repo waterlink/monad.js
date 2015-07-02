@@ -4,6 +4,8 @@ var pattern = m.pattern
 var match = m.match
 var _ = m._
 var functor = m.functor
+var monad = m.monad
+var compose = m.compose
 var Maybe = m.Maybe
 
 context = describe
@@ -167,4 +169,69 @@ describe("pattern matching", function() {
       expect(factorial(5)).toEqual(120)
     })
   })
+})
+
+describe("composition", function() {
+  var sort = curry(function(x) { return x.sort() }),
+      reverse = curry(function(x) { return x.reverse() }),
+      add = curry(function(a, b) { return a + b }),
+      mult = curry(function(a, b) { return a * b }),
+      sum = curry(function(x) { return x.reduce(add) })
+
+  it("composes two functions properly", function() {
+    var reverseSort = compose(reverse, sort)
+    expect(reverseSort([1, 2, 5, 2, 3, 8, 4, 7]))
+      .toEqual([8, 7, 5, 4, 3, 2, 2, 1])
+  })
+
+  it("composes multiple functions properly", function() {
+    var calc = compose(add(-1), sum, Array.fmap(mult(3)), Array.fmap(add(4)))
+
+    expect(calc([1, 2, 3]))
+      .toEqual(53)
+  })
+})
+
+var monadLaws = function(type, example) {
+  return function() {
+    var Obj = function(value) { this.value = value },
+        f = function(value) { return new Obj(value) }
+
+    it("passes first law", function() {
+      expect(compose(type.mjoin, type.fmap(type.mjoin))(example))
+        .toEqual(compose(type.mjoin, type.mjoin)(example))
+    })
+
+    it("passes second law", function() {
+      expect(compose(type.mjoin, type.fmap(type.munit))(example))
+        .toEqual(compose(type.mjoin, type.munit)(example))
+
+      expect(compose(type.mjoin, type.fmap(type.munit))(example))
+        .toEqual(example)
+    })
+
+    it("passes third law", function() {
+      expect(compose(type.munit, f)(example))
+        .toEqual(compose(type.fmap(f), type.munit)(example))
+    })
+
+    it("passes fourth law", function() {
+      expect(compose(type.mjoin, type.fmap(type.fmap(f)))(example))
+        .toEqual(compose(type.fmap(f), type.mjoin)(example))
+    })
+  }
+}
+
+describe("monads", function() {
+  describe("Array monad laws",
+    monadLaws(Array,
+      [ [ [1, 2, 3], [4], [] ], [ [], [5, 6] ], [ [7, 8, 9, 10] ], [] ]
+    )
+  )
+
+  describe("Maybe monad laws",
+    monadLaws(Maybe,
+      [ [ [1, 2, 3], [4], [] ], [ [], [5, 6] ], [ [7, 8, 9, 10] ], [] ]
+    )
+  )
 })

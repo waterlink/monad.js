@@ -134,8 +134,35 @@ M.Pattern.prototype.apply = function(target, args) {
 
 // Functors
 M.functor = function(type, opts) {
+  type.fmap = M.curry(function(fn, x) { return x.fmap(fn) })
   type.prototype.fmap = M.curry(opts.fmap)
   return type
+}
+
+M.functor(Array, { fmap: Array.prototype.map })
+
+// Monads
+M.monad = function(type, opts) {
+  type.munit = M.curry(opts.munit)
+  type.mjoin = M.curry(function(x) { return x.mjoin() })
+  type.prototype.mjoin = M.curry(opts.mjoin)
+  return type
+}
+
+// Composition
+M.compose = function() {
+  var fns = [].slice.call(arguments),
+      fn = fns.reverse().shift()
+
+  fns.map(function(g) {
+    var f = fn
+    fn = M.curry(function() {
+      var args = [].slice.call(arguments)
+      return g.call(this, f.apply(this, args))
+    })
+  })
+
+  return fn
 }
 
 // Types
@@ -146,3 +173,24 @@ M.Maybe.Just.prototype = new M.Maybe
 
 M.Maybe.Nothing = function() {}
 M.Maybe.Nothing.prototype = new M.Maybe
+
+// Monad instances
+
+M.monad(Array, {
+  munit: function(x) { return [x] },
+  mjoin: function() { return [].concat.apply([], this) }
+})
+
+M.monad(M.Maybe, {
+  munit: function(x) { return new M.Maybe.Just(x) },
+
+  mjoin: M.match.withReceiver(
+    M.pattern(M.Maybe.Just,
+      function() { return this.value }),
+
+    M.pattern(M.Maybe.Nothing,
+      function() { return new M.Maybe.Nothing })
+  )
+})
+
+
